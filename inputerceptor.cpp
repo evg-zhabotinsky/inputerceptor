@@ -160,13 +160,19 @@ static bool MouseLockHandler(WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
     }
 }
 
+static void NextLayout() {
+    // Assumes neither LWin nor Space are pressed!
+    static INPUT layoutInputs[] = {
+        {.type = INPUT_KEYBOARD, .ki = {VK_LWIN}},
+        {.type = INPUT_KEYBOARD, .ki = {VK_SPACE}},
+        {.type = INPUT_KEYBOARD, .ki = {VK_SPACE, 0, KEYEVENTF_KEYUP}},
+        {.type = INPUT_KEYBOARD, .ki = {VK_LWIN, 0, KEYEVENTF_KEYUP}}
+    };
+    cerr << "Switching keyboard layout." << endl;
+    SendInput(sizeof(layoutInputs) / sizeof(layoutInputs[0]), layoutInputs, sizeof(layoutInputs[0]));
+}
+
 static bool useCapsLayout = false, releaseCaps = false;
-static INPUT layoutInputs[] = {
-    {.type = INPUT_KEYBOARD, .ki = {VK_LWIN}},
-    {.type = INPUT_KEYBOARD, .ki = {VK_SPACE}},
-    {.type = INPUT_KEYBOARD, .ki = {VK_SPACE, 0, KEYEVENTF_KEYUP}},
-    {.type = INPUT_KEYBOARD, .ki = {VK_LWIN, 0, KEYEVENTF_KEYUP}}
-};
 
 static bool CapsLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     if (!useCapsLayout || lParam->vkCode != VK_CAPITAL) {
@@ -183,8 +189,7 @@ static bool CapsLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
         return true;
     }
     releaseCaps = true;
-    cerr << "Switching keyboard layout." << endl;
-    SendInput(sizeof(layoutInputs) / sizeof(layoutInputs[0]), layoutInputs, sizeof(layoutInputs[0]));
+    NextLayout();
     return false;
 }
 

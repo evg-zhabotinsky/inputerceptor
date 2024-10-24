@@ -12,9 +12,13 @@ This is NOT A SECURE LOCK, but a convenience one, use normal/other locking metho
 
 Does not seem to block Ctrl+Alt+Del or system buttons like power/sleep.
 
+Also allows to switch input language with CapsLock,
+run with `caps-layout` option to enable this.
+If enabled, Shift+CapsLock toggles CapsLock state,
+and CapsLock with no other keys pressed simulates LeftWin+Space tap.
+
 With some source code tweaking, you can add e.g.
 key and/or button remapping,
-keyboard layout switching with CapsLock,
 mouse movement to scroll conversion for trackballs,
 etc. Feel free to PR the features you think might be useful to others!)
 
