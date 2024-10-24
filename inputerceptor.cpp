@@ -40,6 +40,7 @@ InputLocked inputLocked = IL_UNLOCKED;
 static constexpr size_t keyCount = 0x100;
 static int8_t keys[keyCount] = { 0 };
 static int pressedCount = 0;
+static bool disableLocking = false;
 
 static bool KbdLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     unsigned key = lParam->vkCode;
@@ -54,6 +55,9 @@ static bool KbdLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     keys[key] = released ? 0 : inputLocked ? -1 : 1;
     if (!released) {
         pressedCount++;
+    }
+    if (disableLocking) {
+        return true;
     }
     switch (inputLocked) {
     case IL_WAIT_RELEASE:
@@ -142,6 +146,9 @@ static bool MouseLockHandler(WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
     mouseButtons[button] = released ? 0 : inputLocked ? -1 : 1;
     if (!released) {
         pressedCount++;
+    }
+    if (disableLocking) {
+        return true;
     }
     switch (inputLocked) {
     case IL_WAIT_RELEASE:
@@ -242,6 +249,14 @@ static void ParseArgs(const std::vector<std::string> &args) {
             }
             useCapsLayout = true;
             cerr << "Using CapsLock to switch keyboard layout." << endl;
+        }
+        else if (s == "disable-locking") {
+            if (disableLocking) {
+                cerr << "Duplicate option: " << s << endl;
+                throw 2;
+            }
+            disableLocking = true;
+            cerr << "Input locking functionality disabled." << endl;
         }
         else {
             cerr << "Unknown option: " << s << endl;

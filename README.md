@@ -10,12 +10,15 @@ or to let your kids bash away at your laptop without messing up your system.
 
 This is NOT A SECURE LOCK, but a convenience one, use normal/other locking methods for security.
 
-Does not seem to block Ctrl+Alt+Del or system buttons like power/sleep.
+Does not seem to block `Ctrl-Alt-Del` or system buttons like power/sleep.
 
-Also allows to switch input language with CapsLock,
+Also allows to switch input language with `CapsLock`,
 run with `caps-layout` option to enable this.
-If enabled, Shift+CapsLock toggles CapsLock state,
-and CapsLock with no other keys pressed simulates LeftWin+Space tap.
+If enabled, `Shift`+`CapsLock` toggles CapsLock state,
+and `CapsLock` with no other keys pressed simulates `LeftWin`+`Space` tap.
+
+If you want only the "extra" functionality, you can disable input locking
+functionality by running with `disable-locking` option.
 
 With some source code tweaking, you can add e.g.
 key and/or button remapping,
@@ -24,10 +27,10 @@ etc. Feel free to PR the features you think might be useful to others!)
 
 ## How to lock all input
 
-Press LeftCtrl+Esc or RightCtrl+F12.
+Press `LeftCtrl`+`Esc` or `RightCtrl`+`F12`.
 
 Having any other buttons or keys pressed at the same time will not prevent locking,
-except for the modifier keys on the same side of keyboard (Alt/Shift/Win).
+except for the modifier keys on the same side of keyboard (`Alt`/`Shift`/`Win`).
 
 Keys that were pressed before locking will generate release events when released,
 but no other events will be generated until input is unlocked.
@@ -37,7 +40,7 @@ but no other events will be generated until input is unlocked.
 When locked, follow these steps:
 
 1. Release all keys and mouse buttons
-1. Press and hold LeftCtrl+RightCtrl+Esc+F12
+1. Press and hold `LeftCtrl`+`RightCtrl`+`Esc`+`F12`
 1. Release the keys
 
 If you press any other keys or buttons while unlocking, you have to start over.
@@ -55,10 +58,10 @@ you have to start it as administrator.
 The locking combinations are just 2-key combos each, easy to trigger reliably with one hand.
 
 The locking combinations are usually not used for anything else.
-Ctrl+Esc opens the Start menu by default, but hardly anyone uses that combo any more
+`Ctrl`+`Esc` opens the Start menu by default, but hardly anyone uses that combo any more
 since the dedicated Windows key appeared on most keyboards a long time ago.
-Ctrl+F12 is sometimes used, and using RightCtrl for it might be more convenient for some,
-but this is quite a corner case and you can still use LeftCtrl+F12.
+`Ctrl`+`F12` is sometimes used, and using `RightCtrl` for it might be more convenient for some,
+but this is quite a corner case and you can still use `LeftCtrl`+`F12`.
 
 Having one locking combination on each end of the keyboard and ignoring other pressed keys
 allows you to lock the keyboard when the cat is already on it,
@@ -79,7 +82,7 @@ Unfortunately, for now you have to edit the source code and rebuild the program.
 
 The program should build just fine like any other MS Visual Studio project.
 The "Debug" configuration is built as a console app, allowing you to see the debug output
-and to close it with Ctrl-C or by closing the console window.
+and to close it with `Ctrl-C` or by closing the console window.
 
 ## License
 
