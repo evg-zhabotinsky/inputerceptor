@@ -101,21 +101,25 @@ static bool MouseLockHandler(WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
     switch (wParam) {
     case WM_LBUTTONUP:
         released = true;
+        [[fallthrough]];
     case WM_LBUTTONDOWN:
         button = 0;
         break;
     case WM_RBUTTONUP:
         released = true;
+        [[fallthrough]];
     case WM_RBUTTONDOWN:
         button = 1;
         break;
     case WM_MBUTTONUP:
         released = true;
+        [[fallthrough]];
     case WM_MBUTTONDOWN:
         button = 2;
         break;
     case WM_XBUTTONUP:
         released = true;
+        [[fallthrough]];
     case WM_XBUTTONDOWN:
         button = lParam->mouseData >> 16;
         if (button < 1 || button > mouseExtraButtons) {
@@ -157,6 +161,12 @@ static bool MouseLockHandler(WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
 }
 
 static bool useCapsLayout = false, releaseCaps = false;
+static INPUT layoutInputs[] = {
+    {.type = INPUT_KEYBOARD, .ki = {VK_LWIN}},
+    {.type = INPUT_KEYBOARD, .ki = {VK_SPACE}},
+    {.type = INPUT_KEYBOARD, .ki = {VK_SPACE, 0, KEYEVENTF_KEYUP}},
+    {.type = INPUT_KEYBOARD, .ki = {VK_LWIN, 0, KEYEVENTF_KEYUP}}
+};
 
 static bool CapsLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     if (!useCapsLayout || lParam->vkCode != VK_CAPITAL) {
@@ -173,7 +183,8 @@ static bool CapsLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
         return true;
     }
     releaseCaps = true;
-    cerr << "Switching keyboard layout. NOT IMPLEMENTED!" << endl;
+    cerr << "Switching keyboard layout." << endl;
+    SendInput(sizeof(layoutInputs) / sizeof(layoutInputs[0]), layoutInputs, sizeof(layoutInputs[0]));
     return false;
 }
 
