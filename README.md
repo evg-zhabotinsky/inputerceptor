@@ -3,7 +3,7 @@
 ## Keyboard and mouse interceptor for protection against pets and extra convenience
 
 The main purpose of this utility is to lock your keyboard and mouse
-when a cat jumps onto your table and/or starts walking on them, playing with them, etc.
+when a cat jumps onto your table and/or starts walking on the keyboard, playing with the mouse, etc.
 
 Also allows you to e.g. clean your keyboard safely without locking your system and having to enter the password,
 or to let your kids bash away at your laptop without messing up your system.
@@ -14,7 +14,7 @@ With some source code tweaking, you can add e.g.
 key and/or button remapping,
 keyboard layout switching with CapsLock,
 mouse movement to scroll conversion for trackballs,
-etc. Feel free to PR the features you think might be useful to others!
+etc. Feel free to PR the features you think might be useful to others!)
 
 ## How to lock all input
 
@@ -62,7 +62,7 @@ Unfortunately, for now you have to edit the source code and rebuild the program.
 
 ## Building
 
-The program should build just file like any other MS Visual Studio project.
+The program should build just fine like any other MS Visual Studio project.
 The "Debug" configuration is built as a console app, allowing you to see the debug output
 and to close it with Ctrl-C or by closing the console window.
 
