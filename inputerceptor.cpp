@@ -78,8 +78,8 @@ static bool KbdLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     case IL_UNLOCKED:
     default:
         if (!released
-            && ((keys[VK_ESCAPE] && keys[VK_LCONTROL]) 
-                || (keys[VK_F12] && keys[VK_RCONTROL])))
+            && ((keys[VK_ESCAPE] && keys[VK_LCONTROL] && !keys[VK_LSHIFT] && !keys[VK_LMENU] && !keys[VK_LWIN])
+                || (keys[VK_F12] && keys[VK_RCONTROL] && !keys[VK_RSHIFT] && !keys[VK_RMENU] && !keys[VK_RWIN])))
         {
             keys[key] = -1;
             inputLocked = IL_WAIT_RELEASE;
@@ -154,8 +154,26 @@ static bool MouseLockHandler(WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
     }
 }
 
+static bool releaseCaps = false;
+
 static bool CapsLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     return true;
+    if (lParam->vkCode != VK_CAPITAL) {
+        return true;
+    }
+    bool released = lParam->flags & LLKHF_UP;
+    if (releaseCaps) {
+        if (released) {
+            releaseCaps = false;
+        }
+        return false;
+    }
+    if (released || pressedCount != 1) {
+        return true;
+    }
+    releaseCaps = true;
+    cerr << "Switching keyboard layout. NOT IMPLEMENTED!" << endl;
+    return false;
 }
 
 static bool KbdHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
@@ -170,6 +188,7 @@ static bool KbdHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     if (!CapsLockHandler(wParam, lParam)) {
         return false;
     }
+    //cerr << "Kbd:\t0x" << wParam << "\t0x" << lParam->vkCode << "\t0x" << lParam->scanCode << "\t0x" << lParam->flags << endl;
     return true;
 }
 

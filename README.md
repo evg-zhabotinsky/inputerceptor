@@ -10,6 +10,8 @@ or to let your kids bash away at your laptop without messing up your system.
 
 This is NOT A SECURE LOCK, but a convenience one, use normal/other locking methods for security.
 
+Does not seem to block Ctrl+Alt+Del or system buttons like power/sleep.
+
 With some source code tweaking, you can add e.g.
 key and/or button remapping,
 keyboard layout switching with CapsLock,
@@ -20,7 +22,8 @@ etc. Feel free to PR the features you think might be useful to others!)
 
 Press LeftCtrl+Esc or RightCtrl+F12.
 
-Having any other buttons or keys pressed at the same time will not prevent locking.
+Having any other buttons or keys pressed at the same time will not prevent locking,
+except for the modifier keys on the same side of keyboard (Alt/Shift/Win).
 
 Keys that were pressed before locking will generate release events when released,
 but no other events will be generated until input is unlocked.
@@ -34,6 +37,14 @@ When locked, follow these steps:
 1. Release the keys
 
 If you press any other keys or buttons while unlocking, you have to start over.
+
+## How to install
+
+Simply run the program, it should work.
+Terminate it through the Task Manager if you want it to stop.
+
+For it to work with privileged applications (like the Task Manager),
+you have to start it as administrator.
 
 ## Rationale for the above lock/unlock method
 
