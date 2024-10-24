@@ -1,5 +1,7 @@
 #include <Windows.h>
 #include <iostream>
+#include <string>
+#include <vector>
 
 using std::cerr;
 using std::endl;
@@ -154,11 +156,10 @@ static bool MouseLockHandler(WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
     }
 }
 
-static bool releaseCaps = false;
+static bool useCapsLayout = false, releaseCaps = false;
 
 static bool CapsLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
-    return true;
-    if (lParam->vkCode != VK_CAPITAL) {
+    if (!useCapsLayout || lParam->vkCode != VK_CAPITAL) {
         return true;
     }
     bool released = lParam->flags & LLKHF_UP;
@@ -215,6 +216,23 @@ static LRESULT CALLBACK MouseHook(int code, WPARAM wParam, LPARAM lParam) {
         : true;
 }
 
+static void ParseArgs(const std::vector<std::string> &args) {
+    for (auto s : args) {
+        if (s == "caps-layout") {
+            if (useCapsLayout) {
+                cerr << "Duplicate option: " << s << endl;
+                throw 2;
+            }
+            useCapsLayout = true;
+            cerr << "Using CapsLock to switch keyboard layout." << endl;
+        }
+        else {
+            cerr << "Unknown option: " << s << endl;
+            throw 2;
+        }
+    }
+}
+
 static void EventLoop() {
     MSG msg;
     cerr << "Entering Event Loop..." << endl;
@@ -225,16 +243,13 @@ static void EventLoop() {
     cerr << "Event Loop terminated." << endl;
 }
 
-static void Main() {
-    WithHook kbdHook(WH_KEYBOARD_LL, KbdHook), mouseHook(WH_MOUSE_LL, MouseHook);
-    EventLoop();
-}
-
-int main(int argc, char* argv) {
-    cerr << std::hex << std::uppercase;
+static int Main(const std::vector<std::string> &args) {
     try {
-        cerr << "Starting program..." << endl;
-        Main();
+        cerr << "Starting inputerceptor..." << endl;
+        cerr << std::hex << std::uppercase;
+        ParseArgs(args);
+        WithHook kbdHook(WH_KEYBOARD_LL, KbdHook), mouseHook(WH_MOUSE_LL, MouseHook);
+        EventLoop();
     }
     catch (int e) {
         cerr << "Program terminated with error " << e << endl;
@@ -244,11 +259,37 @@ int main(int argc, char* argv) {
     return 0;
 }
 
+int main(int argc, const char* argv[]) {
+    std::vector<std::string> args;
+    for (int i = 1; i < argc; i++) {
+        args.emplace_back(argv[i]);
+    }
+    return Main(args);
+}
+
 int WinMain(
     _In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
     _In_ LPSTR lpCmdLine,
     _In_ int nShowCmd
 ) {
-    return main(0, nullptr);
+    // Copy and split command line with zeros
+    std::string cmdLine(lpCmdLine);
+    std::vector<const char*> argv;
+    bool space = true;
+    for (char &c : cmdLine) {
+        if (space && c != ' ') {
+            space = false;
+            argv.push_back(&c);
+        }
+        else if (!space && c == ' ') {
+            space = true;
+            c = 0;
+        }
+    }
+    std::vector<std::string> args;
+    for (const char* s : argv) {
+        args.emplace_back(s);
+    }
+    return Main(args);
 }
