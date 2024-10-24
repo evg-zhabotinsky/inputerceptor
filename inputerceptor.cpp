@@ -76,16 +76,17 @@ static bool KbdLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
             inputLocked = IL_UNLOCKED;
             cerr << "All keys released. Input unlocked." << endl;
         }
-        return false;
+        return wasPressed == 1 && released;;
     case IL_UNLOCKED:
     default:
         if (!released
             && ((keys[VK_ESCAPE] && keys[VK_LCONTROL] && !keys[VK_LSHIFT] && !keys[VK_LMENU] && !keys[VK_LWIN])
                 || (keys[VK_F12] && keys[VK_RCONTROL] && !keys[VK_RSHIFT] && !keys[VK_RMENU] && !keys[VK_RWIN])))
         {
+            bool strays = keys[VK_LCONTROL] + keys[VK_RCONTROL] + keys[VK_ESCAPE] + keys[VK_F12] < pressedCount;
+            inputLocked = strays ? IL_WAIT_RELEASE : IL_WAIT_UNLOCK;
+            cerr << "Input locked. Wait " << (strays ? "all keys released." : "unlock combo.") << endl;
             keys[key] = -1;
-            inputLocked = IL_WAIT_RELEASE;
-            cerr << "Input locked. Wait all keys released." << endl;
             return false;
         }
         return true;
@@ -205,7 +206,7 @@ static bool KbdHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     if (!CapsLockHandler(wParam, lParam)) {
         return false;
     }
-    //cerr << "Kbd:\t0x" << wParam << "\t0x" << lParam->vkCode << "\t0x" << lParam->scanCode << "\t0x" << lParam->flags << endl;
+    cerr << "Kbd:\t0x" << wParam << "\t0x" << lParam->vkCode << "\t0x" << lParam->scanCode << "\t0x" << lParam->flags << endl;
     return true;
 }
 
