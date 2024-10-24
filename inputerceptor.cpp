@@ -39,7 +39,7 @@ static constexpr size_t keyCount = 0x100;
 static int8_t keys[keyCount] = { 0 };
 static int pressedCount = 0;
 
-static bool KbdHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
+static bool KbdLockHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     if (code != HC_ACTION || (lParam->flags & LLKHF_INJECTED)) {
         return true;
     }
@@ -98,7 +98,7 @@ static bool KbdHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
 static constexpr size_t mouseExtraButtons = 8;
 static int8_t mouseButtons[3 + mouseExtraButtons] = { 0 };
 
-static bool MouseHandler(int code, WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
+static bool MouseLockHandler(int code, WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
     if (code != HC_ACTION || (lParam->flags & LLMHF_INJECTED)) {
         return true;
     }
@@ -163,6 +163,20 @@ static bool MouseHandler(int code, WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
     }
 }
 
+static bool KbdHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
+    if (!KbdLockHandler(code, wParam, lParam)) {
+        return false;
+    }
+    return true;
+}
+
+static bool MouseHandler(int code, WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
+    if (!MouseLockHandler(code, wParam, lParam)) {
+        return false;
+    }
+    return true;
+}
+    
 static LRESULT CALLBACK KbdHook(int code, WPARAM wParam, LPARAM lParam) {
     return KbdHandler(code, wParam, reinterpret_cast<LPKBDLLHOOKSTRUCT>(lParam))
         ? CallNextHookEx(0, code, wParam, lParam)
