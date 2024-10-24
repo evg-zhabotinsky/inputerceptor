@@ -39,12 +39,7 @@ static constexpr size_t keyCount = 0x100;
 static int8_t keys[keyCount] = { 0 };
 static int pressedCount = 0;
 
-static bool KbdLockHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
-    if (code != HC_ACTION || (lParam->flags & LLKHF_INJECTED)) {
-        return true;
-    }
-    //cerr << "Kbd:\t0x" << wParam << "\t0x" << lParam->vkCode << "\t0x" << lParam->scanCode << "\t0x" << lParam->flags << endl;
-    //return true;
+static bool KbdLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     unsigned key = lParam->vkCode;
     bool released = lParam->flags & LLKHF_UP;
     if (key >= keyCount) {
@@ -98,11 +93,7 @@ static bool KbdLockHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
 static constexpr size_t mouseExtraButtons = 8;
 static int8_t mouseButtons[3 + mouseExtraButtons] = { 0 };
 
-static bool MouseLockHandler(int code, WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
-    if (code != HC_ACTION || (lParam->flags & LLMHF_INJECTED)) {
-        return true;
-    }
-    //cerr << "Mouse:\t0x" << wParam << "\t0x" << lParam->pt.x << "\t0x" << lParam->pt.y << "\t0x" << lParam->mouseData << "\t0x" << lParam->flags << endl;
+static bool MouseLockHandler(WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
     bool released = false;
     int button = -1;
     switch (wParam) {
@@ -163,15 +154,31 @@ static bool MouseLockHandler(int code, WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
     }
 }
 
+static bool CapsLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
+    return true;
+}
+
 static bool KbdHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
-    if (!KbdLockHandler(code, wParam, lParam)) {
+    if (code != HC_ACTION || (lParam->flags & LLKHF_INJECTED)) {
+        return true;
+    }
+    //cerr << "Kbd:\t0x" << wParam << "\t0x" << lParam->vkCode << "\t0x" << lParam->scanCode << "\t0x" << lParam->flags << endl;
+    //return true;
+    if (!KbdLockHandler(wParam, lParam)) {
+        return false;
+    }
+    if (!CapsLockHandler(wParam, lParam)) {
         return false;
     }
     return true;
 }
 
 static bool MouseHandler(int code, WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
-    if (!MouseLockHandler(code, wParam, lParam)) {
+    if (code != HC_ACTION || (lParam->flags & LLMHF_INJECTED)) {
+        return true;
+    }
+    //cerr << "Mouse:\t0x" << wParam << "\t0x" << lParam->pt.x << "\t0x" << lParam->pt.y << "\t0x" << lParam->mouseData << "\t0x" << lParam->flags << endl;
+    if (!MouseLockHandler(wParam, lParam)) {
         return false;
     }
     return true;
