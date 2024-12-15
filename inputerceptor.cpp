@@ -37,15 +37,12 @@ enum InputLocked {
 };
 
 InputLocked inputLocked = IL_UNLOCKED;
-static constexpr size_t keyCount = 0x100;
-static int8_t keys[keyCount] = { 0 };
+static int8_t keys[256] = { 0 };
 static int pressedCount = 0;
 static bool disableLocking = false;
 
-static bool KbdLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
-    unsigned key = lParam->vkCode;
-    bool released = lParam->flags & LLKHF_UP;
-    if (key >= keyCount) {
+static bool KbdLockHandler(int key, bool released) {
+    if (key >= 256) {
         return !inputLocked;
     }
     uint8_t wasPressed = keys[key];
@@ -97,9 +94,6 @@ static bool KbdLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     }
 }
 
-static constexpr size_t mouseExtraButtons = 8;
-static int8_t mouseButtons[3 + mouseExtraButtons] = { 0 };
-
 static bool MouseLockHandler(WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
     bool released = false;
     int button = -1;
@@ -108,64 +102,40 @@ static bool MouseLockHandler(WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
         released = true;
         [[fallthrough]];
     case WM_LBUTTONDOWN:
-        button = 0;
+        button = VK_LBUTTON;
         break;
     case WM_RBUTTONUP:
         released = true;
         [[fallthrough]];
     case WM_RBUTTONDOWN:
-        button = 1;
+        button = VK_RBUTTON;
         break;
     case WM_MBUTTONUP:
         released = true;
         [[fallthrough]];
     case WM_MBUTTONDOWN:
-        button = 2;
+        button = VK_MBUTTON;
         break;
     case WM_XBUTTONUP:
         released = true;
         [[fallthrough]];
     case WM_XBUTTONDOWN:
         button = lParam->mouseData >> 16;
-        if (button < 1 || button > mouseExtraButtons) {
-            button = -1;
+        if (button == 1) {
+            button = VK_XBUTTON1;
+        }
+        else if (button == 2) {
+            button = VK_XBUTTON2;
         }
         else {
-            button += 2;
+            button = -1;
         }
         break;
     }
     if (button < 0) {
         return !inputLocked;
     }
-    //cerr << "MouseBtn: 0x" << button << "\t" << pressed << endl;
-    uint8_t wasPressed = mouseButtons[button];
-    if (wasPressed) {
-        pressedCount--;
-    }
-    mouseButtons[button] = released ? 0 : inputLocked ? -1 : 1;
-    if (!released) {
-        pressedCount++;
-    }
-    if (disableLocking) {
-        return true;
-    }
-    switch (inputLocked) {
-    case IL_WAIT_RELEASE:
-        if (!pressedCount) {
-            inputLocked = IL_WAIT_UNLOCK;
-            cerr << "All keys released. Wait unlock combo." << endl;
-        }
-        return wasPressed == 1 && released;
-    case IL_WAIT_UNLOCK:
-    case IL_UNLOCK_AFTER_RELEASE:
-        inputLocked = IL_WAIT_RELEASE;
-        cerr << "Stray key pressed. Wait all released." << endl;
-        return false;
-    case IL_UNLOCKED:
-    default:
-        return true;
-    }
+    return KbdLockHandler(button, released);
 }
 
 static void NextLayout() {
@@ -182,11 +152,10 @@ static void NextLayout() {
 
 static bool useCapsLayout = false, releaseCaps = false;
 
-static bool CapsLockHandler(WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
-    if (!useCapsLayout || lParam->vkCode != VK_CAPITAL) {
+static bool CapsLockHandler(int key, bool released) {
+    if (!useCapsLayout || key != VK_CAPITAL) {
         return true;
     }
-    bool released = lParam->flags & LLKHF_UP;
     if (releaseCaps) {
         if (released) {
             releaseCaps = false;
@@ -205,12 +174,14 @@ static bool KbdHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     if (code != HC_ACTION || (lParam->flags & LLKHF_INJECTED)) {
         return true;
     }
-    //cerr << "Kbd:\t0x" << wParam << "\t0x" << lParam->vkCode << "\t0x" << lParam->scanCode << "\t0x" << lParam->flags << endl;
+    int key = lParam->vkCode;
+    bool released = lParam->flags & LLKHF_UP;
+    //cerr << "Kbd:\t0x" << key << "\t0x" << released << endl;
     //return true;
-    if (!KbdLockHandler(wParam, lParam)) {
+    if (!KbdLockHandler(key, released)) {
         return false;
     }
-    if (!CapsLockHandler(wParam, lParam)) {
+    if (!CapsLockHandler(key, released)) {
         return false;
     }
     //cerr << "Kbd:\t0x" << wParam << "\t0x" << lParam->vkCode << "\t0x" << lParam->scanCode << "\t0x" << lParam->flags << endl;
