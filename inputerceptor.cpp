@@ -90,6 +90,7 @@ static bool KbdLockHandler(int key, bool released) {
             bool strays = !!keys[VK_LCONTROL] + !!keys[VK_RCONTROL] + !!keys[VK_ESCAPE] + !!keys[VK_F12] < pressedCount;
             inputLocked = strays ? IL_WAIT_RELEASE : IL_WAIT_UNLOCK;
             cerr << "Input locked. Wait " << (strays ? "all keys released." : "unlock combo.") << endl;
+            keys[key] = -tick;
             for (WORD i = 0; i < 256; i++) {
                 if (keys[i] > 0) {
                     static INPUT inputs = { .type = INPUT_KEYBOARD, .ki = {i, 0, KEYEVENTF_KEYUP} };
@@ -98,7 +99,6 @@ static bool KbdLockHandler(int key, bool released) {
                     keys[i] = -keys[i];
                 }
             }
-            keys[key] = -tick;
             return false;
         }
         return true;
