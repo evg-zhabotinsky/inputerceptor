@@ -40,8 +40,11 @@ InputLocked inputLocked = IL_UNLOCKED;
 static int8_t keys[256] = { 0 };
 static int pressedCount = 0;
 static bool disableLocking = false;
+static ULONGLONG tickStamp;
+static int tickLength = 15000 / 127, tick = 1;
 
 static bool KbdLockHandler(int key, bool released) {
+    cerr << key << " " << released << endl;
     if (key >= 256) {
         return !inputLocked;
     }
@@ -49,7 +52,7 @@ static bool KbdLockHandler(int key, bool released) {
     if (wasPressed) {
         pressedCount--;
     }
-    keys[key] = released ? 0 : inputLocked ? -1 : 1;
+    keys[key] = released ? 0 : inputLocked ? -tick : tick;
     if (!released) {
         pressedCount++;
     }
@@ -62,7 +65,7 @@ static bool KbdLockHandler(int key, bool released) {
             inputLocked = IL_WAIT_UNLOCK;
             cerr << "All keys released. Wait unlock combo." << endl;
         }
-        return wasPressed == 1 && released;
+        return wasPressed > 0 && released;
     case IL_WAIT_UNLOCK:
     case IL_UNLOCK_AFTER_RELEASE:
         if (key != VK_LCONTROL && key != VK_RCONTROL && key != VK_F12 && key != VK_ESCAPE) {
@@ -77,20 +80,61 @@ static bool KbdLockHandler(int key, bool released) {
             inputLocked = IL_UNLOCKED;
             cerr << "All keys released. Input unlocked." << endl;
         }
-        return wasPressed == 1 && released;;
+        return wasPressed > 0 && released;;
     case IL_UNLOCKED:
     default:
         if (!released
             && ((keys[VK_ESCAPE] && keys[VK_LCONTROL] && !keys[VK_LSHIFT] && !keys[VK_LMENU] && !keys[VK_LWIN])
                 || (keys[VK_F12] && keys[VK_RCONTROL] && !keys[VK_RSHIFT] && !keys[VK_RMENU] && !keys[VK_RWIN])))
         {
-            bool strays = keys[VK_LCONTROL] + keys[VK_RCONTROL] + keys[VK_ESCAPE] + keys[VK_F12] < pressedCount;
+            bool strays = !!keys[VK_LCONTROL] + !!keys[VK_RCONTROL] + !!keys[VK_ESCAPE] + !!keys[VK_F12] < pressedCount;
             inputLocked = strays ? IL_WAIT_RELEASE : IL_WAIT_UNLOCK;
             cerr << "Input locked. Wait " << (strays ? "all keys released." : "unlock combo.") << endl;
-            keys[key] = -1;
+            for (WORD i = 0; i < 256; i++) {
+                if (keys[i] > 0) {
+                    static INPUT inputs = { .type = INPUT_KEYBOARD, .ki = {i, 0, KEYEVENTF_KEYUP} };
+                    cerr << "Releasing key " << i << endl;
+                    SendInput(1, &inputs, sizeof(inputs));
+                    keys[i] = -keys[i];
+                }
+            }
+            keys[key] = -tick;
             return false;
         }
         return true;
+    }
+}
+
+static void UnstickKeys() {
+    ULONGLONG ts = GetTickCount64();
+    ULONGLONG dts = (ts - tickStamp) / tickLength;
+    if (dts > 127) {
+        tick = 1;
+        tickStamp = ts;
+        for (int i = 0; i < 256; i++) {
+            if (keys[i]) {
+                cerr << "Unsticking key 0x" << i << endl;
+                KbdLockHandler(i, true);
+            }
+        }
+        return;
+    }
+    int last = tick, now = int(dts);
+    tickStamp += tickLength * now;
+    now += last;
+    tick = (now - 1) % 127 + 1;
+    for (int i = 0; i < 256; i++) {
+        int v = keys[i];
+        if (!v) {
+            continue;
+        }
+        if (v < 0) {
+            v = -v;
+        }
+        if ((v > last && v <= now) || v <= now - 127) {
+            cerr << "Unsticking key 0x" << i << endl;
+            KbdLockHandler(i, true);
+        }
     }
 }
 
@@ -174,6 +218,7 @@ static bool KbdHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     if (code != HC_ACTION || (lParam->flags & LLKHF_INJECTED)) {
         return true;
     }
+    UnstickKeys();
     int key = lParam->vkCode;
     bool released = lParam->flags & LLKHF_UP;
     //cerr << "Kbd:\t0x" << key << "\t0x" << released << endl;
@@ -251,6 +296,7 @@ static int Main(const std::vector<std::string> &args) {
         cerr << "Starting inputerceptor..." << endl;
         cerr << std::hex << std::uppercase;
         ParseArgs(args);
+        tickStamp = GetTickCount64();
         WithHook kbdHook(WH_KEYBOARD_LL, KbdHook), mouseHook(WH_MOUSE_LL, MouseHook);
         EventLoop();
     }
