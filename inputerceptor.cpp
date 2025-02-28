@@ -78,6 +78,7 @@ static bool KbdLockHandler(int key, bool released) {
         } else
         if (inputLocked == IL_UNLOCK_AFTER_RELEASE && !pressedCount) {
             inputLocked = IL_UNLOCKED;
+            BlockInput(false);
             cerr << "All keys released. Input unlocked." << endl;
         }
         return wasPressed > 0 && released;;
@@ -223,8 +224,14 @@ static bool KbdHandler(int code, WPARAM wParam, LPKBDLLHOOKSTRUCT lParam) {
     bool released = lParam->flags & LLKHF_UP;
     //cerr << "Kbd:\t0x" << key << "\t0x" << released << endl;
     //return true;
-    if (!KbdLockHandler(key, released)) {
-        return false;
+    {
+        bool blocked = !KbdLockHandler(key, released);
+        if (inputLocked != IL_UNLOCKED) {
+            BlockInput(true);
+        }
+        if (blocked) {
+            return false;
+        }
     }
     if (!CapsLockHandler(key, released)) {
         return false;
@@ -238,8 +245,14 @@ static bool MouseHandler(int code, WPARAM wParam, LPMSLLHOOKSTRUCT lParam) {
         return true;
     }
     //cerr << "Mouse:\t0x" << wParam << "\t0x" << lParam->pt.x << "\t0x" << lParam->pt.y << "\t0x" << lParam->mouseData << "\t0x" << lParam->flags << endl;
-    if (!MouseLockHandler(wParam, lParam)) {
-        return false;
+    {
+        bool blocked = !MouseLockHandler(wParam, lParam);
+        if (inputLocked != IL_UNLOCKED) {
+            BlockInput(true);
+        }
+        if (blocked) {
+            return false;
+        }
     }
     return true;
 }
